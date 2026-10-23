@@ -60,3 +60,12 @@ Desktop.ini
 *.log
 TestResults/
 BenchmarkDotNet.Artifacts/
+
+# ==============================================================================
+# PUBLICAÇÕES, VERSÕES E ARQUIVOS DE RELEASE
+# ==============================================================================
+[Pp]ublish/
+publish/
+[Vv]ersions/
+versions/
+*.zip
