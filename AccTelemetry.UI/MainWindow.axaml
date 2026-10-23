@@ -1,0 +1,169 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sp="clr-namespace:ScottPlot.Avalonia;assembly=ScottPlot.Avalonia"
+        xmlns:local="clr-namespace:AccTelemetry.UI"
+        x:Class="AccTelemetry.UI.MainWindow"
+        x:CompileBindings="False"
+        Title="ACC Telemetry Studio" Width="1300" Height="800"
+        Background="#18181b">
+
+	<Grid>
+		<!-- ======================================================= -->
+		<!-- VIEW 1: MENU DE SESSÕES MOTEC                           -->
+		<!-- ======================================================= -->
+		<Grid Name="ViewMenu" RowDefinitions="Auto, *" Margin="32" IsVisible="True">
+			<DockPanel Grid.Row="0" Margin="0,0,0,24">
+				<Button DockPanel.Dock="Right" Content="Recarregar Pasta" Click="OnRefreshFilesClicked"
+                        Background="#27272a" Foreground="White" Padding="14,8" CornerRadius="6"/>
+				<StackPanel>
+					<TextBlock Text="Arquivos de Telemetria do ACC" FontSize="24" FontWeight="Bold" Foreground="White"/>
+					<TextBlock Name="TxtFolderLocation" Text="Pasta: ..." FontSize="12" Foreground="#71717a" Margin="0,4,0,0"/>
+				</StackPanel>
+			</DockPanel>
+
+			<ScrollViewer Grid.Row="1">
+				<ItemsControl Name="LstMotecFiles">
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<Border Background="#202024" BorderBrush="#2d2d30" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+								<Grid ColumnDefinitions="*, Auto">
+									<StackPanel Grid.Column="0" Spacing="4">
+										<StackPanel Orientation="Horizontal" Spacing="10">
+											<TextBlock Text="{Binding Track}" FontSize="18" FontWeight="Bold" Foreground="White"/>
+											<Border Background="#27272a" CornerRadius="4" Padding="6,2">
+												<TextBlock Text="{Binding Car}" FontSize="12" Foreground="#38bdf8" FontWeight="SemiBold"/>
+											</Border>
+										</StackPanel>
+										<TextBlock Text="{Binding Details}" FontSize="13" Foreground="#a1a1aa"/>
+										<TextBlock Text="{Binding FileName}" FontSize="11" Foreground="#52525b"/>
+									</StackPanel>
+									<Button Grid.Column="1" Content="Analisar Telemetria →" Click="OnOpenSessionClicked" Tag="{Binding FullPath}" Background="#2563eb" Foreground="White" FontWeight="Bold" Padding="16,10" CornerRadius="6" VerticalAlignment="Center"/>
+								</Grid>
+							</Border>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</ScrollViewer>
+		</Grid>
+
+		<!-- ======================================================= -->
+		<!-- VIEW 2: VISUALIZADOR + MAPA DA PISTA                    -->
+		<!-- ======================================================= -->
+		<Grid Name="ViewPlots" ColumnDefinitions="280, *" IsVisible="False">
+			<Border Grid.Column="0" Background="#202024" BorderBrush="#2d2d30" BorderThickness="0,0,1,0" Padding="12">
+				<DockPanel LastChildFill="True">
+					<Button DockPanel.Dock="Top" Content="← Voltar ao Menu" Click="OnBackToMenuClicked" Background="#27272a" Foreground="White" Margin="0,0,0,16" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+
+					<TextBlock DockPanel.Dock="Top" Text="Volta de Referência (Laranja):" FontSize="12" FontWeight="SemiBold" Foreground="#fb923c" Margin="0,0,0,4"/>
+					<ComboBox Name="CmbRefLap" DockPanel.Dock="Top" HorizontalAlignment="Stretch" Margin="0,0,0,16" SelectionChanged="OnRefLapSelected"/>
+
+					<TextBlock DockPanel.Dock="Top" Text="Exibir Gráficos:" FontSize="12" FontWeight="SemiBold" Foreground="#a1a1aa" Margin="0,0,0,4"/>
+					<UniformGrid DockPanel.Dock="Top" Columns="2" Margin="0,0,0,12">
+						<CheckBox Name="ChkShowDelta" Content="Delta" IsChecked="True" Foreground="White" FontSize="12" IsCheckedChanged="OnPlotVisibilityChanged"/>
+						<CheckBox Name="ChkShowSpeed" Content="Velocidade" IsChecked="True" Foreground="White" FontSize="12" IsCheckedChanged="OnPlotVisibilityChanged"/>
+						<CheckBox Name="ChkShowPedals" Content="Pedais" IsChecked="True" Foreground="White" FontSize="12" IsCheckedChanged="OnPlotVisibilityChanged"/>
+						<CheckBox Name="ChkShowGear" Content="Marchas" IsChecked="True" Foreground="White" FontSize="12" IsCheckedChanged="OnPlotVisibilityChanged"/>
+					</UniformGrid>
+
+					<TextBlock DockPanel.Dock="Top" Text="Filtro de Pedais:" FontSize="12" FontWeight="SemiBold" Foreground="#a1a1aa" Margin="0,0,0,4"/>
+					<UniformGrid DockPanel.Dock="Top" Columns="2" Margin="0,0,0,16">
+						<CheckBox Name="ChkShowThrottle" Content="Acelerador" IsChecked="True" Foreground="#4ade80" FontSize="12" IsCheckedChanged="OnPedalsFilterChanged"/>
+						<CheckBox Name="ChkShowBrake" Content="Freio" IsChecked="True" Foreground="#f87171" FontSize="12" IsCheckedChanged="OnPedalsFilterChanged"/>
+					</UniformGrid>
+
+					<!-- MAPA NO FUNDO DA BARRA LATERAL -->
+					<StackPanel DockPanel.Dock="Bottom" Margin="0,16,0,0">
+						<TextBlock Text="Mapa do Circuito (Tempo Real)" FontSize="12" FontWeight="SemiBold" Foreground="#a1a1aa" Margin="0,0,0,4"/>
+						<Border Height="200" Background="#121214" BorderBrush="#2d2d30" BorderThickness="1" CornerRadius="6" ClipToBounds="True">
+							<sp:AvaPlot Name="PlotTrackMap"/>
+						</Border>
+					</StackPanel>
+
+					<TextBlock DockPanel.Dock="Top" Name="TxtCurrentSession" Text="Volta Atual (Azul):" FontSize="14" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,8"/>
+					<ListBox Name="LstLaps" SelectionChanged="OnLapSelected" Background="#18181b" BorderBrush="#2d2d30" CornerRadius="4">
+						<ListBox.ItemTemplate>
+							<DataTemplate>
+								<Border Padding="6" BorderBrush="#2d2d30" BorderThickness="0,0,0,1">
+									<StackPanel>
+										<TextBlock Text="{Binding Title}" FontWeight="Bold" Foreground="White"/>
+										<TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="#a1a1aa"/>
+									</StackPanel>
+								</Border>
+							</DataTemplate>
+						</ListBox.ItemTemplate>
+					</ListBox>
+				</DockPanel>
+			</Border>
+
+			<!-- GRÁFICOS -->
+			<Grid Grid.Column="1" Name="PlotsContainer">
+				<Grid Name="PlotsGrid" RowDefinitions="12*, 20*, 15*, 10*">
+					<Border Name="BorderDelta" Grid.Row="0" Margin="8,8,8,4" Background="#121214" CornerRadius="6" ClipToBounds="True">
+						<sp:AvaPlot Name="PlotDelta"/>
+					</Border>
+					<Border Name="BorderSpeed" Grid.Row="1" Margin="8,4" Background="#121214" CornerRadius="6" ClipToBounds="True">
+						<sp:AvaPlot Name="PlotSpeed"/>
+					</Border>
+					<Border Name="BorderPedals" Grid.Row="2" Margin="8,4" Background="#121214" CornerRadius="6" ClipToBounds="True">
+						<sp:AvaPlot Name="PlotPedals"/>
+					</Border>
+					<Border Name="BorderGear" Grid.Row="3" Margin="8,4,8,8" Background="#121214" CornerRadius="6" ClipToBounds="True">
+						<sp:AvaPlot Name="PlotGear"/>
+					</Border>
+				</Grid>
+
+				<Canvas IsHitTestVisible="False">
+					<Border Name="TooltipCard" Background="#E618181b" BorderBrush="#3f3f46" BorderThickness="1" CornerRadius="8" Padding="14,12" IsVisible="False">
+						<Border.BoxShadow>
+							<BoxShadows>0 4 12 0 #80000000</BoxShadows>
+						</Border.BoxShadow>
+						<StackPanel Spacing="6">
+							<TextBlock Name="TxtHoverDist" Text="0 m" Foreground="White" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center"/>
+							<TextBlock Name="TxtHoverDelta" Text="Delta: +0.00s" Foreground="#a8a29e" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center"/>
+							<Rectangle Height="1" Fill="#3f3f46" Margin="0,4"/>
+
+							<!-- CORPO DO TOOLTIP: COM VALORES DE REFERÊNCIA -->
+							<Grid ColumnDefinitions="Auto, 32, Auto">
+								<!-- Lado Esquerdo -->
+								<StackPanel Grid.Column="0" Spacing="6">
+									<StackPanel Spacing="1">
+										<TextBlock Text="Velocidade" Foreground="#a1a1aa" FontSize="11"/>
+										<StackPanel Orientation="Horizontal" Spacing="8">
+											<TextBlock Name="TxtHoverSpeed" Text="0 km/h" Foreground="#38bdf8" FontWeight="Bold" FontSize="14"/>
+											<TextBlock Name="TxtHoverSpeedRef" Text="(0)" Foreground="#fb923c" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Bottom" Margin="0,0,0,1"/>
+										</StackPanel>
+									</StackPanel>
+									<StackPanel Spacing="1">
+										<TextBlock Text="Marcha" Foreground="#a1a1aa" FontSize="11"/>
+										<StackPanel Orientation="Horizontal" Spacing="8">
+											<TextBlock Name="TxtHoverGear" Text="N" Foreground="#fbbf24" FontWeight="Bold" FontSize="14"/>
+											<TextBlock Name="TxtHoverGearRef" Text="(N)" Foreground="#fb923c" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Bottom" Margin="0,0,0,1"/>
+										</StackPanel>
+									</StackPanel>
+								</StackPanel>
+
+								<!-- Lado Direito -->
+								<StackPanel Grid.Column="2" Spacing="6">
+									<StackPanel Spacing="1">
+										<TextBlock Text="Acelerador" Foreground="#a1a1aa" FontSize="11"/>
+										<StackPanel Orientation="Horizontal" Spacing="8">
+											<TextBlock Name="TxtHoverThrottle" Text="0%" Foreground="#4ade80" FontWeight="Bold" FontSize="14"/>
+											<TextBlock Name="TxtHoverThrottleRef" Text="(0%)" Foreground="#fb923c" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Bottom" Margin="0,0,0,1"/>
+										</StackPanel>
+									</StackPanel>
+									<StackPanel Spacing="1">
+										<TextBlock Text="Freio" Foreground="#a1a1aa" FontSize="11"/>
+										<StackPanel Orientation="Horizontal" Spacing="8">
+											<TextBlock Name="TxtHoverBrake" Text="0%" Foreground="#f87171" FontWeight="Bold" FontSize="14"/>
+											<TextBlock Name="TxtHoverBrakeRef" Text="(0%)" Foreground="#fb923c" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Bottom" Margin="0,0,0,1"/>
+										</StackPanel>
+									</StackPanel>
+								</StackPanel>
+							</Grid>
+						</StackPanel>
+					</Border>
+				</Canvas>
+			</Grid>
+		</Grid>
+	</Grid>
+</Window>

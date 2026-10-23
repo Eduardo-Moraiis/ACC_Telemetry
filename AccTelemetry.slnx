@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="AccTelemetry.Domain/AccTelemetry.Domain.csproj" Id="e09a3a4b-c0ea-48fa-94f7-fdc2a0f886a3" />
+  <Project Path="AccTelemetry.IO.Motec/AccTelemetry.IO.Motec.csproj" Id="09b658e4-c3c7-4404-87dc-a4a661c9c31f" />
+  <Project Path="AccTelemetry.IO.Persistence/AccTelemetry.IO.Persistence.csproj" Id="2c0df9df-2f01-472c-827c-1f7e5bae4395" />
+  <Project Path="AccTelemetry.TestApp/AccTelemetry.TestApp.csproj" Id="482f3af9-3978-43e6-bc15-9445ab57cd08" />
+  <Project Path="AccTelemetry.UI/AccTelemetry.UI.csproj" />
+</Solution>
